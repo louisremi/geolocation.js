@@ -80,12 +80,16 @@ if ( !geolocation ) {
 				responseTimeout = setTimeout(function() {
 					window[cbId](true);
 				}, options && options.timeout || 5000);
-			script.src = "http//www.google.com/jsapi?callback=" + cbId;
+			script.src = "http://www.google.com/jsapi?callback=" + cbId;
 			window[cbId] = function( timeout ) {
-				var location = google.loader.ClientLocation,
-					address = location.address;
-				timeout ?
-					errorCb():
+				if ( timeout ) {
+					errorCb({
+						code: 3,
+						message: "Timeout"
+					});
+				} else {
+					var location = google.loader.ClientLocation,
+						address = location.address;
 					successCb(currentPosition = {
 						coords: {
 							latitude: location.latitude,
@@ -98,15 +102,16 @@ if ( !geolocation ) {
 							countryCode: address.country_code
 						}
 					});
+				}
 				// cleanup
 				delete window[cbId];
-				window.body.removeChild(script);
+				document.body.removeChild(script);
 				if ( responseTimeout ) {
 					clearTimeout( responseTimeout );
 					responseTimeout = null;
 				}
 			}
-			window.body.appendChild(script);
+			document.body.appendChild(script);
 		};
 		support.timeout = true;
 	}
