@@ -11,8 +11,7 @@
 
 if ( !geolocation ) {
 	var geoloc = {},
-		support = {	timeout: false },
-		defaultMaxAge = 3E4;
+		support = { timeout: false };
 
 	// WebOS polyfill
 	// details: http://developer.palm.com/index.php?option=com_content&view=article&id=1673
@@ -58,24 +57,52 @@ if ( !geolocation ) {
 				});
 		}
 	}
+
 	// implement watchPosition and clearWatch when missing
-	// TODO: should use a single interval, just like blackberry polyfill
 	if ( !('watchPosition' in geoloc) ) {
+		var watched = [],
+			watchInterval;
 		geoloc.watchPosition = function( successCb, errorCb, options ) {
-			// poll currentPosition on a regular basis
-			return setInterval(function() {
-				geoloc.getCurrentPosition( function(data) {
-					// only fire the callback if the position has changed
-					if ( data.coords.latitude != currentPosition.coords.latitude || data.coords.longitude != currentPosition.coords.longitude ) {
-						successCb( data );
-					}
-				}, errorCb, options );
-			}, options && options.maximumAge || defaultMaxAge);
+			// we want only one interval to watch the position
+			if ( !watched.length ) {
+				watchInterval = setInterval(function() {
+					geoloc.getCurrentPosition( function(data) {
+						// only fire the callback if the position has changed
+						if ( data.coords.latitude != currentPosition.coords.latitude || data.coords.longitude != currentPosition.coords.longitude ) {
+							var i = watched.length;
+							while ( i-- ) {
+								watched[i].success( data );
+							}
+						}
+					}, function( error ) {
+						var i = watched.length;
+						while ( i-- ) {
+							watched[i].err( error );
+						}
+					}, options );
+				}, options && options.maximumAge || 3E4);
+			}
+			var watch = {
+				success: successCb,
+				err: errorCb
+			};
+			watched.push(watch);
+			return watch;
 		};
 		geoloc.clearWatch = function( watch ) {
-			clearInterval( watch );
+			var i = watched.length;
+			while ( i-- ) {
+				if ( watched[i] === watch ) {
+					watched = watched.splice(i, 1);
+					continue;
+				}
+			}
+			if ( !watched.length && watchInterval ) {
+				clearInterval(watchInterval);
+			}
 		}
 	}
+
 	// implement timeout option
 	if ( !support.timeout ) {
 		geoloc._getCurrentPosition = geoloc.getCurrentPosition;
