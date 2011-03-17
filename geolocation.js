@@ -79,7 +79,7 @@ if ( !geolocation ) {
 				// A special timeout implementation is required, as cleanup should always happen
 				responseTimeout = setTimeout(function() {
 					window[cbId](true);
-				}, options.timeout || 5000);
+				}, options && options.timeout || 5000);
 			script.src = "http//www.google.com/jsapi?callback=" + cbId;
 			window[cbId] = function( timeout ) {
 				var location = google.loader.ClientLocation,
@@ -122,7 +122,7 @@ if ( !geolocation ) {
 						successCb( data );
 					}
 				}, errorCb, options );
-			}, options.maximumAge || defaultMaxAge);
+			}, options && options.maximumAge || defaultMaxAge);
 		};
 		geoloc.clearWatch = function( watch ) {
 			clearInterval( watch );

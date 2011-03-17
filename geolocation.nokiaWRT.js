@@ -38,46 +38,6 @@ if ( !geolocation ) {
 				}
 			});
 		};
-
-	// fallback to google geolocation
-	} else {
-		var currentPosition = {};
-		geoloc.getCurrentPosition = function( successCb, errorCb, options ) {
-			var script = document.createElement('script'),
-				cbId = 'cb' + (Math.random() * 1E4 |0),
-				// A special timeout implementation is required, as cleanup should always happen
-				responseTimeout = setTimeout(function() {
-					window[cbId](true);
-				}, options.timeout || 5000);
-			script.src = "http//www.google.com/jsapi?callback=" + cbId;
-			window[cbId] = function( timeout ) {
-				var location = google.loader.ClientLocation,
-					address = location.address;
-				timeout ?
-					errorCb():
-					successCb(currentPosition = {
-						coords: {
-							latitude: location.latitude,
-							longitude: location.longitude
-						},
-						address: {
-							city: address.city,
-							county: address.region,
-							country: address.country,
-							countryCode: address.country_code
-						}
-					});
-				// cleanup
-				delete window[cbId];
-				window.body.removeChild(script);
-				if ( responseTimeout ) {
-					clearTimeout( responseTimeout );
-					responseTimeout = null;
-				}
-			}
-			window.body.appendChild(script);
-		};
-		support.timeout = true;
 	}
 	// implement watchPosition and clearWatch when missing
 	// TODO: should use a single interval, just like blackberry polyfill
@@ -91,7 +51,7 @@ if ( !geolocation ) {
 						successCb( data );
 					}
 				}, errorCb, options );
-			}, options.maximumAge || defaultMaxAge);
+			}, options && options.maximumAge || defaultMaxAge);
 		};
 		geoloc.clearWatch = function( watch ) {
 			clearInterval( watch );
