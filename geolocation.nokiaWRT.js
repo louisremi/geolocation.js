@@ -74,7 +74,7 @@ if ( !geolocation ) {
 			var i = watched.length;
 			while ( i-- ) {
 				if ( watched[i] === watch ) {
-					watched = watched.splice(i, 1);
+					watched.splice(i, 1);
 					continue;
 				}
 			}
